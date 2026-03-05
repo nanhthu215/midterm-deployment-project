@@ -29,13 +29,13 @@ sudo apt-get install -y \
 echo '[3/5] Installing Node.js 20.x...'
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
-echo 'Node version: $(node -v)'
-echo 'NPM version: $(npm -v)'
+echo "Node version: $(node -v)"
+echo "NPM version: $(npm -v)"
 
 # --- 4. Cài đặt PM2 để chạy app Node.js ---
 echo '[4/5] Installing PM2 process manager...'
 sudo npm install -g pm2
-echo 'PM2 version: $(pm2 -v)'
+echo "PM2 version: $(pm2 -v)"
 
 # --- 5. Tạo các thư mục cần thiết theo yêu cầu của main.js ---
 echo '[5/5] Creating application directories...'
