@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+
+  # ─── Web Application ───────────────────────
+  web:
+    image: nanhthu215/midterm-app:latest
+    container_name: midterm_web
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGO_URI=mongodb://mongo:27017/midterm_db
+    volumes:
+      - uploads_data:/app/src/public/uploads
+    depends_on:
+      - mongo
+    networks:
+      - app_network
+
+  # ─── MongoDB Database ───────────────────────
+  mongo:
+    image: mongo:6.0
+    container_name: midterm_mongo
+    restart: always
+    environment:
+      - MONGO_INITDB_DATABASE=midterm_db
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app_network
+
+# ─── Volumes ────────────────────────────────────
+volumes:
+  uploads_data:
+  mongo_data:
+
+# ─── Networks ───────────────────────────────────
+networks:
+  app_network:
+    driver: bridge
