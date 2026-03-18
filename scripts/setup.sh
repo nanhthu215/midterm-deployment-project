@@ -5,7 +5,7 @@
 # Usage     : chmod +x setup.sh && ./setup.sh
 # =============================================================
 
-set -e  # Dừng script nếu có lệnh nào lỗi [cite: 171]
+set -e  # Dừng script nếu có lệnh nào lỗi
 
 echo '================================================'
 echo ' Starting environment setup...'
