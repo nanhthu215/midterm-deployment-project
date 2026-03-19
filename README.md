@@ -36,7 +36,7 @@ Nếu bạn muốn kết nối MongoDB có username/password, chỉnh `MONGO_URI
 1. Cài dependencies:
 
 ```bash
-cd /Users/mvmanh/Desktop/api
+cd C:\Users\PC1\Documents\Zalo Received Files\GK_MVM
 npm install
 ```
 
@@ -89,3 +89,53 @@ Lưu ý: UI trên trang chủ sử dụng fetch + FormData để gửi file, nê
 
 Nếu bạn muốn tôi cập nhật README để ghi rõ cách migrate dữ liệu, cách reset uploads hoặc ví dụ cụ thể hơn, cho biết yêu cầu cụ thể và tôi sẽ bổ sung.
 
+**PHẦN 2: TÀI LIỆU TRIỂN KHAI ĐỒ ÁN (DEPLOYMENT)**
+Dự án này không chỉ dừng lại ở mức phát triển ứng dụng (Development) mà còn áp dụng các tiêu chuẩn DevOps để triển khai lên môi trường Production thực tế. Hệ thống được chia thành 3 giai đoạn (Phases) tăng tiến:
+
+*1. Cấu trúc Repository (Phase 1)*
+    Mã nguồn được tổ chức lại theo chuẩn để dễ dàng quản lý hạ tầng và mã nguồn:
+
+    src/: Chứa toàn bộ mã nguồn ứng dụng Node.js (từ project gốc).
+
+    scripts/: Chứa file setup.sh tự động hóa cài đặt môi trường.
+
+    phase2/ & phase3/: Chứa các tài liệu, cấu hình Nginx, Dockerfile và docker-compose riêng biệt cho từng giai đoạn.
+
+    Quy trình Git: Nhánh main được áp dụng Branch Protection. Mọi thay đổi code đều phải thông qua Pull Request (PR) và được thành viên khác review (Approve) trước khi Merge.
+
+*2. Triển khai Host-based (Phase 2)*
+    Ở giai đoạn này, ứng dụng được chạy trực tiếp trên máy chủ vật lý/máy ảo (AWS EC2 Ubuntu).
+
+    Tự động hóa cài đặt: Sử dụng scripts/setup.sh để cài đặt Node.js, MongoDB, PM2 và Nginx chỉ với 1 lệnh.
+
+    Quản lý tiến trình (PM2): Thay vì chạy bằng lệnh node thông thường, hệ thống sử dụng PM2 để đảm bảo ứng dụng luôn sống (High Availability). PM2 được cấu hình tự động khởi chạy lại ứng dụng ngay cả khi máy chủ bị sập nguồn (Reboot).
+
+    ```Bash
+    cd src
+    pm2 start npm --name "midterm-app" -- start
+    pm2 save
+    ```
+    Bảo mật & Điều hướng (Nginx Reverse Proxy): * Ứng dụng Node.js chạy ngầm ở Port 3000.
+
+    Nginx được thiết lập làm người gác cổng, nhận traffic từ Port 80 (HTTP) và 443 (HTTPS) rồi forward an toàn vào Port 3000.
+
+    Tích hợp chứng chỉ SSL/TLS (Certbot) để mã hóa dữ liệu.
+
+*3. Triển khai Containerization (Phase 3 - Docker)*
+    Để giải quyết bài toán "Works on my machine" và cách ly môi trường, hệ thống được nâng cấp lên kiến trúc Container.
+
+    Đóng gói Image: Ứng dụng Node.js được build thành Docker Image tối ưu (dùng node:20-alpine) và đẩy lên Docker Hub.
+
+    Orchestration (Docker Compose): Khởi chạy toàn bộ stack (Web App + MongoDB) chỉ bằng một tệp docker-compose.yml.
+
+    ```Bash
+    cd phase3
+    docker compose up -d
+    ```
+    Bảo vệ dữ liệu (Persistent Volumes): Vì ứng dụng có tính năng upload ảnh (lưu vào đĩa tại public/uploads/), nếu Container bị xóa, ảnh sẽ mất. Nhóm đã cấu hình Docker Volumes để ánh xạ thư mục upload và dữ liệu MongoDB ra ngoài máy Host. Đảm bảo dữ liệu tồn tại vĩnh viễn dù Container có bị khởi động lại hay xóa bỏ.
+
+# Trích xuất từ docker-compose.yml
+volumes:
+  - uploads_data:/app/src/public/uploads
+  - mongo_data:/data/db
+Tự phục hồi: Các container được cấu hình chính sách restart: always, tự động đứng dậy sau sự cố crash hoặc khi máy chủ khởi động lại.
